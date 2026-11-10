@@ -22,7 +22,7 @@ import { AgentsStatus } from "./AgentsStatus";
 import { HOME_KIND, REGISTRY_PAGE, SESSION_KIND, TASK_DRAG, TOOL_WINDOW } from "./model";
 import { sendPaths, sendSelection } from "./references";
 import { focusedSession } from "./sessionFocus";
-import { connect, disconnect, openHome, useAgents } from "./store";
+import { closeAndNewTask, closeTask, connect, disconnect, openHome, useAgents } from "./store";
 import { TaskStatusMark } from "./TaskStatusMark";
 import { taskActions } from "./taskActions";
 import { replyActions } from "./replyActions";
@@ -139,6 +139,26 @@ export function activate(): () => void {
         when: "projectOpen",
         keywords: ["agent", "claude", "codex", "gemini", "ai"],
         run: ({ arg }) => openHome(typeof arg === "string" ? arg : undefined),
+      },
+      {
+        id: "agents.closeTask",
+        title: "Close Agent Task",
+        description: "Closes the agent task tab in focus; the task keeps running in the Agents tool window.",
+        category: "Agents",
+        icon: "close",
+        when: "projectOpen",
+        keywords: ["agent", "claude", "codex", "gemini", "ai", "close", "tab"],
+        run: () => closeTask(),
+      },
+      {
+        id: "agents.closeAndNewTask",
+        title: "Close and New Agent Task",
+        description: "Closes the agent task tab in focus and opens the New Task page in its place.",
+        category: "Agents",
+        icon: "plus",
+        when: "projectOpen",
+        keywords: ["agent", "claude", "codex", "gemini", "ai", "close", "new"],
+        run: () => closeAndNewTask(),
       },
       {
         id: "agents.addAgent",

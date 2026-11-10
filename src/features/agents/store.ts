@@ -553,6 +553,16 @@ export function openHome(prompt?: string) {
   void editorService().openInput({ kind: HOME_KIND, key: HOME_KEY, data: {} }, { focus: true });
 }
 
+export async function closeTask(): Promise<boolean> {
+  const active = editorService().activeInput?.();
+  if (active?.kind !== SESSION_KIND) return true;
+  return (await editorService().closeInput?.(active.key)) !== false;
+}
+
+export async function closeAndNewTask() {
+  if (await closeTask()) openHome();
+}
+
 /** `isolation` overrides the draft's (a project without git can only use the local checkout). */
 export async function startTask(
   isolation: Isolation = useAgents.getState().draft.isolation,

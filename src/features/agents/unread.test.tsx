@@ -14,6 +14,8 @@ import { activate } from "./index";
 import * as actions from "@/platform/actions";
 import { TASK_DRAG } from "./model";
 import {
+  closeAndNewTask,
+  closeTask,
   connect,
   disconnect,
   dockTask,
@@ -369,5 +371,45 @@ describe("docking a conversation in the tool window", () => {
     disconnect();
     expect(useAgents.getState().docked).toBeNull();
     expect(useAgents.getState().sessionLocation).toBe("toolWindow");
+  });
+});
+
+describe("closing the agent task in focus", () => {
+  it("closes its tab", async () => {
+    backend.active = { kind: "agent-session", key: "agent:one", data: { task: "one" } };
+    backend.closeInput.mockResolvedValue(true);
+    await act(() => closeTask());
+    expect(backend.closeInput).toHaveBeenCalledWith("agent:one");
+    expect(useAgents.getState().tasks.get("one")?.status).toBe("running");
+  });
+
+  it("keeps a file tab in focus open", async () => {
+    backend.active = { kind: "file", key: "file:/project/a.ts", data: {} };
+    await expect(closeTask()).resolves.toBe(true);
+    expect(backend.closeInput).not.toHaveBeenCalled();
+  });
+});
+
+describe("closing the agent task in focus and starting a new one", () => {
+  it("closes its tab and opens the New Task page", async () => {
+    backend.active = { kind: "agent-session", key: "agent:one", data: { task: "one" } };
+    backend.closeInput.mockResolvedValue(true);
+    await act(() => closeAndNewTask());
+    expect(backend.closeInput).toHaveBeenCalledWith("agent:one");
+    expect(backend.openInput).toHaveBeenCalledWith(expect.objectContaining({ kind: "agent-home" }), { focus: true });
+  });
+
+  it("keeps a file tab in focus open", async () => {
+    backend.active = { kind: "file", key: "file:/project/a.ts", data: {} };
+    await act(() => closeAndNewTask());
+    expect(backend.closeInput).not.toHaveBeenCalled();
+    expect(backend.openInput).toHaveBeenCalledWith(expect.objectContaining({ kind: "agent-home" }), { focus: true });
+  });
+
+  it("stays on the task when closing its tab is cancelled", async () => {
+    backend.active = { kind: "agent-session", key: "agent:one", data: { task: "one" } };
+    backend.closeInput.mockResolvedValue(false);
+    await act(() => closeAndNewTask());
+    expect(backend.openInput).not.toHaveBeenCalled();
   });
 });
